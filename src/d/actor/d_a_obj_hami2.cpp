@@ -5,9 +5,10 @@
 
 #include "d/dolzel_rel.h" // IWYU pragma: keep
 #include "d/actor/d_a_obj_hami2.h"
-#include "m_Do/m_Do_ext.h"
 #include "d/d_procname.h"
 #include "d/d_priority.h"
+
+Mtx daObjHami2::Act_c::M_tmp_mtx;
 
 /* 00000078-0000012C       .text nodeCallBack__FP7J3DNodei */
 static BOOL nodeCallBack(J3DNode*, int) {
@@ -31,7 +32,7 @@ cPhs_State daObjHami2::Act_c::Mthd_Create() {
 
 /* 00000540-00000548       .text Delete__Q210daObjHami25Act_cFv */
 BOOL daObjHami2::Act_c::Delete() {
-    /* Nonmatching */
+    return true;
 }
 
 /* 00000548-000005E8       .text Mthd_Delete__Q210daObjHami25Act_cFv */
@@ -41,12 +42,17 @@ BOOL daObjHami2::Act_c::Mthd_Delete() {
 
 /* 000005E8-00000678       .text set_mtx__Q210daObjHami25Act_cFv */
 void daObjHami2::Act_c::set_mtx() {
-    /* Nonmatching */
+    mDoMtx_stack_c::transS(current.pos);
+    mDoMtx_stack_c::ZXYrotM(shape_angle);
+    mpModel->setBaseTRMtx(mDoMtx_stack_c::get());
+    mDoMtx_stack_c::YrotM(field_0x2c8);
+    cMtx_copy(mDoMtx_stack_c::get(), M_tmp_mtx);
 }
 
 /* 00000678-000006B4       .text init_mtx__Q210daObjHami25Act_cFv */
 void daObjHami2::Act_c::init_mtx() {
-    /* Nonmatching */
+    mpModel->setBaseScale(scale);
+    set_mtx();
 }
 
 /* 000006B4-00000730       .text daObjHami2_close_stop__Q210daObjHami25Act_cFv */
@@ -77,16 +83,50 @@ void daObjHami2::Act_c::daObjHami2_close_demo_wait() {
 /* 0000096C-00000A08       .text daObjHami2_close_demo__Q210daObjHami25Act_cFv */
 void daObjHami2::Act_c::daObjHami2_close_demo() {
     /* Nonmatching */
+    field_0x2c8 -= 0x100;
+    if (field_0x2c8 < 0) {
+        field_0x2c8 = 0;
+        g_dComIfG_gameInfo.play.getVibration().StartShock(4, -0x21, cXyz(0, 1, 0));
+        dComIfGp_event_reset();
+        field_0x30c = 0;
+    }
 }
 
 /* 00000A08-00000AB8       .text Execute__Q210daObjHami25Act_cFPPA3_A4_f */
-BOOL daObjHami2::Act_c::Execute(Mtx**) {
-    /* Nonmatching */
+BOOL daObjHami2::Act_c::Execute(Mtx** mtx) {
+    switch (field_0x30c) {
+    case 0:
+        daObjHami2_close_stop();
+        break;
+    case 1:
+        daObjHami2_open_demo_wait();
+        break;
+    case 2:
+        daObjHami2_open_demo();
+        break;
+    case 3:
+        daObjHami2_open_stop();
+        break;
+    case 4:
+        daObjHami2_close_demo_wait();
+        break;
+    case 5:
+        daObjHami2_close_demo();
+        break;
+    }
+    set_mtx();
+    *mtx = &M_tmp_mtx;
+    return true;
 }
 
 /* 00000AB8-00000B58       .text Draw__Q210daObjHami25Act_cFv */
 BOOL daObjHami2::Act_c::Draw() {
-    /* Nonmatching */
+    g_env_light.settingTevStruct(TEV_TYPE_BG0, &current.pos, &tevStr);
+    g_env_light.setLightTevColorType(mpModel, &tevStr);
+    dComIfGd_setListBG();
+    mDoExt_modelUpdateDL(mpModel);
+    dComIfGd_setList();
+    return true;
 }
 
 namespace daObjHami2 {
